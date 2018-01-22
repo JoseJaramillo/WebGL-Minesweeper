@@ -1,0 +1,314 @@
+
+<html>
+<head>
+ <style>
+ body { margin: 0; }
+ canvas { width: 100%; height: 100% }
+ </style>
+</head>
+<body>
+ <script src="js/three.js"></script>
+ <script src="js/Detector.js"></script>
+<script src="js/Stats.js"></script>
+<script src="js/OrbitControls.js"></script>
+<script src="js/THREEx.KeyboardState.js"></script>
+<script src="js/THREEx.FullScreen.js"></script>
+<script src="js/THREEx.WindowResize.js"></script>
+<script src="js/jquery-1.9.1.js"></script>
+
+<script src="js/jquery-ui.js"></script>
+
+
+<script src="js/info.js"></script>
+
+ <script>
+
+ // Setup a new scene
+ var scene = new THREE.Scene();
+
+ var projector, mouse = { x: 0, y: 0 };
+
+ // Setup the camera
+ var camera = new THREE.PerspectiveCamera(90, window.innerWidth/window.innerHeight, 0.1, 1000);
+ camera.position.z = 0;
+ camera.position.y = 2.3;
+ camera.rotation.x = -1.57; //-1.57
+
+ // Setup the renderer
+ var renderer = new THREE.WebGLRenderer();
+ renderer.setSize(window.innerWidth, window.innerHeight);
+ document.body.appendChild(renderer.domElement);
+
+
+ // Add the lights
+ var ambientLight = new THREE.AmbientLight(0x888888);  //111111
+ scene.add(ambientLight);
+ 
+
+ var light = new THREE.PointLight( 0xFFFFDD );
+ light.position.set( -15, 10, 15 );
+ scene.add( light );
+
+var TAPAcounter= {r:0,c:1};
+ // Models
+ var model;
+ var sphereModel;
+ var clearall =0;
+ var a=1;
+ var b=1;
+ 
+ //declaring the game matrix
+ var gm=[];
+ for (var c=0;c<9;c++){
+	gm[c]=[];
+	for (var d=0;d<9;d++){
+		gm[c][d]=0;
+		}
+	}
+// Filling the game matrix with numbers, and bombs
+ // 0 - Empty, 9-bomb.
+ 
+ var ones={r:[0,0,0,0,1,1,1,1,1,2,3,3,3,3,4,4,4,5,5,6,6,6,7,7,8,8],c:[1,4,6,7,0,1,4,5,6,7,0,3,7,8,0,4,5,0,5,3,7,8,4,8,4,8]};
+ var twos={r:[1,1,3,3,4,5,5,5,6,6,6,8,8],c:[7,8,1,2,3,1,2,3,4,5,6,5,7]};
+ var threes={r:[7],c:[6]};
+ var bombs={r:[0,0,0,2,4,4,5,7,7,8],c:[0,5,8,8,1,2,4,5,7,6]};
+ 
+ for(e=0;e<ones.r.length;e++){
+	gm[ones.r[e]][ones.c[e]]=1;
+ }
+  for(f=0;f<twos.r.length;f++){
+	gm[twos.r[f]][twos.c[f]]=2;
+ }
+   for(g=0;g<threes.r.length;g++){
+	gm[threes.r[g]][threes.c[g]]=3;
+ }
+   for(h=0;h<bombs.r.length;h++){
+	gm[bombs.r[h]][bombs.c[h]]=9;
+ }
+  //gm[twos.r][twos.c]=2;
+ //gm[threes.r][threes.c]=3;
+ //gm[bombs.r][bombs.r]=9;
+ /*console.log(gm[0]);
+ console.log(gm[1]);
+ console.log(gm[2]);
+ console.log(gm[3]);
+ console.log(gm[4]);
+ console.log(gm[5]);
+ console.log(gm[6]);
+ console.log(gm[7]);
+ console.log(gm[8]);*/
+
+
+// PlayedMatrix
+
+  var pm=[];
+ for (var k=0;k<9;k++){
+	pm[k]=[];
+	for (var l=0;l<9;l++){
+		pm[k][l]=0;
+		}
+	}
+ 
+ 
+ 
+ // Load the JSON files and provide callback functions (modelToScene
+ var loader = new THREE.JSONLoader();
+
+ loader.load( "Models/Xtable.json", addTABLEToScene);
+ loader.load( "Models/Xboxes.json", addTABLEToScene);
+ loader.load( "Models/Xmines.json", addTABLEToScene);
+
+path3=".json";
+path0="Models/t";
+path="";
+for(ii=1;ii<10;ii++){
+	for(i=1;i<10;i++){
+		path2=i.toString();
+		path1=ii.toString();
+		path=path0.concat(path1.concat(path2.concat(path3)));
+		//console.log(path);
+		loader.load( path, addTAPASToScene);
+	}
+}
+ loader.load( "Models/X1.json", addTABLEToScene);
+ loader.load( "Models/X2.json", addTABLEToScene);
+ loader.load( "Models/X3.json", addTABLEToScene);
+
+	// initialize object to perform world/screen calculations
+
+	
+ projector = new THREE.Projector();
+document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+
+ // After loading JSON from our file, we add it to the scene
+ function addModelToScene( geometry, materials ) {
+   var material = new THREE.MeshFaceMaterial(materials);
+   model = new THREE.Mesh( geometry, material );
+   model.scale.set(1,1,1);
+   scene.add( model );
+ }
+ 
+ 
+  // After loading JSON from our file, we add it to the scene
+ function addTABLEToScene( geometry, materials ) {
+   var material = new THREE.MeshFaceMaterial(materials);
+   model = new THREE.Mesh( geometry, material );
+   model.scale.set(1,1,1);
+   
+   //model.position.z=-1
+   //model.position.x=1.5
+   scene.add( model );
+ }
+ 
+  function addTAPASToScene( geometry, materials ) {
+   var material = new THREE.MeshFaceMaterial(materials);
+   model = new THREE.Mesh( geometry, material );
+   model.scale.set(1,1,1);
+   	TAPAcounter.r +=1
+   
+   if (TAPAcounter.r ==10){
+	TAPAcounter.r=1;
+	TAPAcounter.c +=1;
+   }
+
+   TAPA="TAPA".concat(TAPAcounter.c);
+   TAPA=TAPA.concat(TAPAcounter.r);
+	//console.log(TAPAcounter.c);
+	
+	//console.log(path + TAPA);
+	model.name=TAPA;
+   //model.position.z=-1
+   //model.position.x=1.5
+   scene.add( model );
+ }
+   // After loading JSON from our file, we add it to the scene
+ 
+
+ // Special callback to get a reference to the sphere
+ function addSphereToScene( geometry, materials ){
+   var material = new THREE.MeshFaceMaterial(materials);
+   sphereModel = new THREE.Mesh( geometry, material );
+   sphereModel.scale.set(1,1,1);
+   sphereModel.position.y += 0.5;
+   scene.add( sphereModel );
+ }
+ 
+ function findobjectbynumber(NAME){
+	
+	NAME="TAPA".concat(NAME)
+	pp=0;
+	for (pp=0;pp<scene.children.length;pp++){
+		if(scene.children[pp].name==NAME){
+			obj=scene.children[pp];
+			pp=scene.children.length;
+			}
+		}
+ return obj
+ }
+
+ function openbox(c){
+	
+	centerboxxy=c.split("");
+	console.log(centerboxxy[0]);
+	console.log(centerboxxy[1]);
+	boxtoopen=findobjectbynumber(parseInt(c));
+	boxtoopen.position.x =21.1;
+	pm[(centerboxxy[0]-1)][centerboxxy[1]-1]=1;
+	
+	if (gm[(centerboxxy[0]-1)][centerboxxy[1]-1]==0){
+		var operator=["(parseInt(c)+1)","(parseInt(c)+10)","(parseInt(c)-10)","(parseInt(c)-1)","(parseInt(c)+11)","(parseInt(c)+9)","(parseInt(c)-11)","(parseInt(c)-9)"]
+		console.log("empty!");
+		for(var dd=0;dd<8;dd++){
+			Open=eval(operator[dd])
+			Open= Open.toString();
+			Openxy=Open.split("");
+			if(pm[(Openxy[0]-1)][Openxy[1]-1]==0){
+				openbox(Open);
+				}
+			}		
+		}	
+	}
+ 
+ 
+function onDocumentMouseDown( event ){
+
+	mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+
+	mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+	/*console.log(mouse.x);
+	console.log(mouse.y);
+*/
+	// find intersections
+
+
+
+	// create a Ray with origin at the mouse position
+
+	//   and direction into the scene (camera direction)
+
+	var vector = new THREE.Vector3( mouse.x, mouse.y, 1 );
+	projector.unprojectVector( vector, camera );
+	var ray = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+
+	// create an array containing all objects in the scene with which the ray intersects
+	var intersects = ray.intersectObjects( scene.children, true  );
+
+	// if there is one (or more) intersections
+clearall=1;
+		
+	if ( intersects.length > 0 && intersects[0].object.name.startsWith("TAPA"))
+
+	{
+		var boxnumber=intersects[0].object.name;
+		boxnumber = boxnumber.substring(4,6);
+		console.log("Opening box... "+boxnumber);
+		openbox(boxnumber);
+		console.log(boxnumber);
+
+		//intersects[ 0 ].object.position.x =21.1;
+		
+		clearall=1;
+		
+		//var O= model.name("TAPA55");
+		//console.log(O.name);
+		//O.position.x =21.1;
+	}
+
+
+}
+
+ // Render loop to rotate our sphere by a little bit each frame
+ var render = function () {
+   requestAnimationFrame(render);
+
+   if( typeof sphereModel != "undefined" ){
+       // Rotate the sphere
+        sphereModel.rotation.y += 0.001;
+        sphereModel.rotation.x += 0.002;
+    }
+		/*if (clearall==1){
+			t=((b*10)+a)
+			console.log("searching "+ t);
+			clearall=0;
+			var O= findobjectbynumber(t)
+			console.log("return "+ O.name);
+			O.position.x =21.1;
+
+			a +=1;
+			if (a==10){
+				a=1;
+				b+=1;
+				if(b==10){
+					clearall=0;
+					}
+				}
+			
+			}*/
+   renderer.render(scene, camera);
+ };
+
+ render();
+ </script>
+</body>
+</html>
