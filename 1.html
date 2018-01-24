@@ -31,6 +31,7 @@
 
  // Setup the camera
  var camera = new THREE.PerspectiveCamera(90, window.innerWidth/window.innerHeight, 0.1, 1000);
+ //var camera = new THREE.OrthographicCamera(window.innerWidth/-2,window.innerWidth/2,window.innerHeight/2,window.innerHeight/-2, 0.1, 1000);
  camera.position.z = 0;
  camera.position.y = 2.3; //2.3
  camera.rotation.x = -1.57; //-1.57
@@ -47,8 +48,21 @@
  
 
  var light = new THREE.PointLight( 0xFFFFDD );
- light.position.set( -15, 10, 15 );
+ light.position.set( -30, 30, 30 );  //-15,10,15
+ light.intensity=0.8;
  scene.add( light );
+ var light = new THREE.PointLight( 0xFFFFDD );
+ light.position.set( 60, 30, -60 );  //-15,10,15
+ light.intensity=0.4;
+ scene.add( light );
+ console.log(light);
+ var counter=0;
+ var Flagvector=new Array;
+ var Flagcounter=new Array;
+ var ActTAPAvector=new Array;
+ var ActTAPAcounter=new Array;
+ 
+ 
 
 var TAPAcounter= {r:0,c:1};
  // Models
@@ -93,18 +107,7 @@ var TAPAcounter= {r:0,c:1};
    for(h=0;h<bombs.r.length;h++){
 	gm[bombs.r[h]][bombs.c[h]]=9;
  }
-  //gm[twos.r][twos.c]=2;
- //gm[threes.r][threes.c]=3;
- //gm[bombs.r][bombs.r]=9;
- /*console.log(gm[0]);
- console.log(gm[1]);
- console.log(gm[2]);
- console.log(gm[3]);
- console.log(gm[4]);
- console.log(gm[5]);
- console.log(gm[6]);
- console.log(gm[7]);
- console.log(gm[8]);*/
+
 
 
 // PlayedMatrix
@@ -126,7 +129,7 @@ var TAPAcounter= {r:0,c:1};
  loader.load( "Models/Xboxes.json", addTABLEToScene);
  loader.load( "Models/Xmines.json", addTABLEToScene);
  
-
+//		ADD THE TAPAS TO SCENE		//
 path3=".json";
 path0="Models/t";
 path="";
@@ -148,14 +151,6 @@ for(ii=1;ii<10;ii++){
 	
  projector = new THREE.Projector();
 document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-
- // After loading JSON from our file, we add it to the scene
- function addModelToScene( geometry, materials ) {
-   var material = new THREE.MeshFaceMaterial(materials);
-   model = new THREE.Mesh( geometry, material );
-   model.scale.set(1,1,1);
-   scene.add( model );
- }
  
  
   // After loading JSON from our file, we add it to the scene
@@ -163,79 +158,64 @@ document.addEventListener( 'mousedown', onDocumentMouseDown, false );
    var material = new THREE.MeshFaceMaterial(materials);
    model = new THREE.Mesh( geometry, material );
    model.scale.set(1,1,1);
-   
-   //model.position.z=-1
-   //model.position.x=1.5
    scene.add( model );
  }
  var helpset;
+ 
+ 
   function addFlagToScene( geometry, materials ) {
   
-  
-		
-  
-	   //var material = new THREE.MeshFaceMaterial(materials);
+	  // Just set skinning to the material that has the bones.
 	   materials[0].skinning=true;
-	   //materials[1].skinning=true;
-	   //materials[2].skinning=true;
-	   
 	   model = new THREE.SkinnedMesh( geometry,new THREE.MeshFaceMaterial(materials) );
 	   model.scale.set(1,1,1);
-	   console.log("add flag on tapa! "+FlagPos);
 	   model.name=("F"+FlagPos);
-	   console.log("Flag name "+model.name+" added!");
-	   //search for the Tapa possition and put it above.
-	   //var WhatTapa= findobjectbynumber(FlagPos)
 	   WhatTapa=FlagPos.split("");
 	   model.position.x=-0.59421+(0.1448475*(parseInt(WhatTapa[1])-1))
 	   model.position.z=-0.53769+(0.1448475*(parseInt(WhatTapa[0])-1))
 	   model.position.y=1.45
-		/*skeleton=new THREE.Skeleton(model.bones)
-		model.bind(skeleton);*/
-	   console.log(WhatTapa);
-	   console.log(model.position.x);
-	   console.log(model.position.z);
-	   console.log(model);
-	   /*
-	   model.bones[0].useQuaternion = false;
-	   model.bones[1].useQuaternion = false;
-	   model.bones[2].useQuaternion = false;
-	   model.bones[3].useQuaternion = false;
-	   model.bones[4].useQuaternion = false;
-	   */
-	   //console.log("Tapa possition Z "+WhatTapa._modelViewMatrix[1]);
-	   //model.position.z=-1
-	   //model.position.x=1.5
 	   scene.add( model );
-	   //var helper = new THREE.SkeletonHelper( model );
-		//helper.material.linewidth = 3;
-		//scene.add( helper );
-	   //helpset = new THREE.SkeletonHelper(model);
-	   //scene.add(helpset);
 	 }
- 
-  function addTAPASToScene( geometry, materials ) {
-   var material = new THREE.MeshFaceMaterial(materials);
-   model = new THREE.Mesh( geometry, material );
-   model.scale.set(1,1,1);
-   	TAPAcounter.r +=1
-   
-   if (TAPAcounter.r ==10){
-	TAPAcounter.r=1;
-	TAPAcounter.c +=1;
-   }
 
-   TAPA="TAPA".concat(TAPAcounter.c);
-   TAPA=TAPA.concat(TAPAcounter.r);
-	//console.log(TAPAcounter.c);
-	
-	//console.log(path + TAPA);
+  function addTAPASToScene( geometry, materials ) {
+	var material = new THREE.MeshFaceMaterial(materials);
+	model = new THREE.Mesh( geometry, material );
+	model.scale.set(1,1,1);
+	TAPAcounter.r +=1
+	if (TAPAcounter.r ==10){		
+		TAPAcounter.r=1;
+		TAPAcounter.c +=1;
+		}
+	TAPA="TAPA".concat(TAPAcounter.c);
+	TAPA=TAPA.concat(TAPAcounter.r);
 	model.name=TAPA;
-   //model.position.z=-1
-   //model.position.x=1.5
-   scene.add( model );
+	scene.add( model );
  }
 
+ var Atapax = new Array;
+ var Atapay = new Array;
+ 
+ //					ANIMATED TAPAS				//
+ 
+ function addATAPAToScene(geometry,materials){
+	var material = new THREE.MeshFaceMaterial(materials);
+	model = new THREE.Mesh( geometry, material );
+	model.scale.set(1,1,1);
+	
+	//console.log("creating a ATAPA..")
+	model.position.x=-0.59421+(0.1448475*(parseInt(Atapay[0])-1))
+	model.position.z=-0.53769+(0.1448475*(parseInt(Atapax[0])-1))
+	model.position.y=1.4
+	//console.log("ATAPAS to create.." +Atapax+Atapay)
+	Atapax.shift();
+	Atapay.shift();
+	//console.log("ATAPAS left.." +Atapax+Atapay)
+	model.name="ActTAPA";
+	ActTAPAvector.push(model);
+	scene.add( model );
+ }
+ 
+ 
  
  function findobjectbynumber(NAME){
 	
@@ -270,9 +250,17 @@ document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 	boxtoopen=findobjectbynumber(parseInt(c));
 	if (pm[(centerboxxy[0]-1)][centerboxxy[1]-1]==0){
 		boxtoopen.position.x =21.1;
+		//new Atapa={x:(parseInt(centerboxxy[0])),y:(parseInt(centerboxxy[1]))}
+		Atapax.push(parseInt(centerboxxy[0]))
+		Atapay.push(parseInt(centerboxxy[1]))
+		console.log(Atapax)
+		console.log(Atapay)
+		loader.load( "Models/atapa.json", addATAPAToScene);
 		pm[(centerboxxy[0]-1)][centerboxxy[1]-1]=1;
 		
+		
 		if (gm[(centerboxxy[0]-1)][centerboxxy[1]-1]==0){
+			
 			var operator=["(parseInt(c)+1)","(parseInt(c)+10)","(parseInt(c)-10)","(parseInt(c)-1)","(parseInt(c)+11)","(parseInt(c)+9)","(parseInt(c)-11)","(parseInt(c)-9)"]
 			//console.log("empty!");
 			for(var dd=0;dd<8;dd++){
@@ -282,10 +270,12 @@ document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 				if(pm[(Openxy[0]-1)][Openxy[1]-1]==0){
 					openbox(Open);
 					}
-				}		
+				}	
 			}	
 		}
-	}
+	}	
+	
+
  function remove(array, element) {
     const index = array.indexOf(element);
     array.splice(index, 1);
@@ -335,7 +325,7 @@ function onDocumentMouseDown( event ){
 	{
 		var boxnumber=intersects[0].object.name;
 		boxnumber = boxnumber.substring(4,6);
-		//console.log("Opening box... "+boxnumber);
+		console.log("Opening box... "+intersects);
 		openbox(boxnumber);
 		//console.log(boxnumber);
 	}
@@ -355,9 +345,7 @@ function onDocumentMouseDown( event ){
 }
 
 
-var counter=0;
- var Flagvector=new Array;
- var Flagcounter=new Array;
+
 function containsObject(obj, list) {
     var i;
     for (i = 0; i < list.length; i++) {
@@ -369,10 +357,15 @@ function containsObject(obj, list) {
     return false;
 }
 function animate(model,counter){
-	if ((containsObject(model,Flagvector))==false ){
+	if ((containsObject(model,Flagvector))==false && model.name.startsWith("F")){
 		Flagvector.push(model)
 		Flagcounter.push(counter)
 		console.log(Flagvector)
+		}
+	if ((containsObject(model,ActTAPAvector))==false && model.name.startsWith("ActTAPA")){
+		ActTAPAvector.push(model)
+		ActTAPAcounter.push(0)
+		console.log(ActTAPAvector)
 		}
 	
 	//console.log(counter)
@@ -383,7 +376,13 @@ function animate(model,counter){
 		Flagvector[i].bones[4].rotation.y =-0.3*(Math.sin(0.07*(counter+Flagcounter[i])));
 		//console.log(Flagvector[i])
 		}
-
+	for (var ii=0;ii<ActTAPAvector.length;ii++){
+		if (ActTAPAvector[ii].position.y<3){
+			ActTAPAvector[ii].rotation.z +=0.1;
+			ActTAPAvector[ii].position.y +=0.01;
+			//console.log(Flagvector[ii])
+			}
+		}
 }
  
  var render = function () {
@@ -391,14 +390,8 @@ function animate(model,counter){
 
    
    counter++;
-   if( model.name.startsWith("F")){
+   if( model.name.startsWith("F") || model.name.startsWith("ActTAPA")){
 		animate(model,counter);
-		
-		/*model.bones[1].rotation.y =0.3*Math.sin(0.1*counter);
-		model.bones[2].rotation.y =0.3*(Math.sin(0.07*counter));
-		model.bones[3].rotation.y =-0.3*(Math.sin(0.1*counter));
-		model.bones[4].rotation.y =-0.3*(Math.sin(0.07*counter));
-*/
     }
 
    renderer.render(scene, camera);
