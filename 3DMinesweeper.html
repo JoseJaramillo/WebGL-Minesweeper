@@ -1,0 +1,727 @@
+
+<html>
+
+<head>
+ <style>
+ body { margin: 0; }
+ canvas { width: 100%; height: 100% }
+ </style>
+</head>
+<!-- block added or changed -->
+<button id = "ButtonAL">Ambient</button>
+<button id = "ButtonPL">Point</button>
+<button id = "ButtonSL">Spot</button>
+
+spot angle 0.01 <input id="slider1" type="range"
+ min="0.01" max="0.08" step="0.01" value="0.03"
+  />
+ 0.08
+
+zoom in/out 90 <input id="slider2" type="range"
+ min="90" max="120" step="5" value="105"
+  />
+ 120
+
+<select id="ListTX" onChange="javascript:doSomething();">
+  <option>Wood</option>
+  <option>tablaB</option>
+  <option>tablaC</option>
+</select>
+<!-- end modification -->
+<body>
+ <script src="js/three.js"></script>
+ <script src="js/Detector.js"></script>
+<script src="js/Stats.js"></script>
+<script src="js/OrbitControls.js"></script>
+<script src="js/THREEx.KeyboardState.js"></script>
+<script src="js/THREEx.FullScreen.js"></script>
+<script src="js/THREEx.WindowResize.js"></script>
+<script src="js/jquery-1.9.1.js"></script>
+<script src="js/numeric-1.2.6.js"></script>
+
+
+<script src="js/jquery-ui.js"></script>
+
+
+<script src="js/info.js"></script>
+
+ <script>
+
+ // Setup a new scene
+ var scene = new THREE.Scene();
+
+ var projector, mouse = { x: 0, y: 0 };
+
+ // Setup the camera
+ var camera = new THREE.PerspectiveCamera(105, window.innerWidth/window.innerHeight, 0.1, 1000); //line added or changed
+ //var camera = new THREE.OrthographicCamera(window.innerWidth/-2,window.innerWidth/2,window.innerHeight/2,window.innerHeight/-2, 0.1, 1000);
+ camera.position.z = 0;
+ camera.position.y = 2.3; //2.3
+ camera.rotation.x = -1.57; //-1.57
+
+ // Setup the renderer
+ var renderer = new THREE.WebGLRenderer();
+ renderer.setSize(window.innerWidth, window.innerHeight);
+ document.body.appendChild(renderer.domElement);
+
+
+ // Add the lights
+ var ambient_switch = true; //line added or changed
+ var ambientLight = new THREE.AmbientLight(0x888888);  //111111
+ scene.add(ambientLight);
+ 
+ //block added or changed
+ var point_switch = true;
+ var light1 = new THREE.PointLight( 0xFFFFDD );
+ light1.position.set( -30, 30, 30 );  //-15,10,15
+ light1.intensity=0.8;
+ scene.add( light1 );
+ //end modification
+ var light = new THREE.PointLight( 0xFFFFDD );
+ light.position.set( 60, 30, -60 );  //-15,10,15
+ light.intensity=0.4;
+ scene.add( light );
+ console.log(light);
+
+ //block added or changed
+ var spot_leg = 1;
+ var spotx = 0.0;
+ var spoty = -3.0;
+ var spot_switch = true;
+ var spot = new THREE.SpotLight( 0xDDDDDD );
+ spot.intensity = 0.5;
+ spot.distance = 200;
+ spot.angle = 0.03;
+ spot.penumbra = 0.0;
+ spot.position.set( spotx, 10, spoty );
+ scene.add( spot );
+ //end modification
+
+ var counter=0;
+ var Flagvector=new Array;
+ var Flagcounter=new Array;
+ var ActTAPAvector=new Array;
+ var ActTAPAcounter=new Array; 
+
+var TAPAcounter= {r:0,c:1};
+ // Models
+ var model;
+ var sphereModel;
+ var clearall =0;
+ var a=1;
+ var b=1;
+ //var time =  clock.getElapsedTime();
+ //Disable right click menu
+ 
+  document.addEventListener("contextmenu", function(e){
+    e.preventDefault();
+}, false);
+ 
+ 
+ //declaring the game matrix
+ var gm=[];
+ for (var c=0;c<9;c++){
+	gm[c]=[];
+	for (var d=0;d<9;d++){
+		gm[c][d]=0;
+		}
+	}
+// Filling the game matrix with numbers, and bombs
+ // 0 - Empty, 9-bomb.
+
+ var ones={r:[0,0,0,0,1,1,1,1,1,2,3,3,3,3,4,4,4,5,5,6,6,6,7,7,8,8],c:[1,4,6,7,0,1,4,5,6,7,0,3,7,8,0,4,5,0,5,3,7,8,4,8,4,8]};
+ var twos={r:[1,1,3,3,4,5,5,5,6,6,6,8,8],c:[7,8,1,2,3,1,2,3,4,5,6,5,7]};
+ var threes={r:[7],c:[6]};
+ var bombs={r:[0,0,0,2,4,4,5,7,7,8],c:[0,5,8,8,1,2,4,5,7,6]};
+ 
+ for(e=0;e<ones.r.length;e++){
+	gm[ones.r[e]][ones.c[e]]=1;
+ }
+  for(f=0;f<twos.r.length;f++){
+	gm[twos.r[f]][twos.c[f]]=2;
+ }
+   for(g=0;g<threes.r.length;g++){
+	gm[threes.r[g]][threes.c[g]]=3;
+ }
+   for(h=0;h<bombs.r.length;h++){
+	gm[bombs.r[h]][bombs.c[h]]=9;
+ }
+
+
+
+// PlayedMatrix
+
+  var pm=[];
+ for (var k=0;k<9;k++){
+	pm[k]=[];
+	for (var l=0;l<9;l++){
+		pm[k][l]=0;
+		}
+	}
+ 
+ var FlagPos= "";
+
+ // Load the JSON files and provide callback functions (modelToScene
+ var meshes = new Object(); //line added or changed
+ var loader = new THREE.JSONLoader();
+
+ //block added or changed
+ loader.load( "Models/wood1table.json", makeHandler('Wood',true));
+ loader.load( "Models/wood2table.json", makeHandler('tablaB',false)); //requires a model named tablaB to run correctly
+ loader.load( "Models/wood3table.json", makeHandler('tablaC',false)); //requires a model named tablaC to run correctly
+ //end modification
+ loader.load( "Models/Xboxes.json", addTABLEToScene);
+ loader.load( "Models/Xmines.json", addTABLEToScene);
+ 
+//		ADD THE TAPAS TO SCENE		//
+path3=".json";
+path0="Models/t";
+path="";
+for(ii=1;ii<10;ii++){
+	for(i=1;i<10;i++){
+		path2=i.toString();
+		path1=ii.toString();
+		path=path0.concat(path1.concat(path2.concat(path3)));
+		//console.log(path);
+		loader.load( path, addTAPASToScene);
+	}
+}
+ loader.load( "Models/X1.json", addTABLEToScene);
+ loader.load( "Models/X2.json", addTABLEToScene);
+ loader.load( "Models/X3.json", addTABLEToScene);
+ //Add robot 4R to scene
+
+var robotpos=[0,0.8];
+var armlength=[0.5,0.5,0.5,0.2];
+var armangles=[0,0,0,0]
+var robcouter=0;
+var J=Jacobian([0.1,0.1,0.2,0.2]);
+Jpinv=pinv(J);
+console.log(Jpinv)
+//Jd=numeric.dot(JT,J);
+
+//			functions for moving the arm 			//
+function Jacobian(angles){
+	var J=numeric.rep([2,4],2)
+		
+		J[0][0]=-((armlength[0]*Math.sin(angles[0]))+(armlength[1]*Math.sin(angles[0]+angles[1]))+(armlength[2]*Math.sin(angles[0]+angles[1]+angles[2]))+(armlength[3]*Math.sin(angles[0]+angles[2]+angles[3]+angles[1])))
+		J[0][1]=-((armlength[1]*Math.sin(angles[0]+angles[1]))+(armlength[2]*Math.sin(angles[0]+angles[1]+angles[2]))+(armlength[0]*Math.sin(angles[0]+angles[2]+angles[3]+angles[1])))
+		J[0][2]=-((armlength[2]*Math.sin(angles[0]+angles[1]+angles[2]))+(armlength[0]*Math.sin(angles[0]+angles[2]+angles[3]+angles[1])))
+		J[0][3]=-((armlength[0]*Math.sin(angles[0]+angles[2]+angles[3]+angles[1])))
+		J[1][0]=((armlength[0]*Math.cos(angles[0]))+(armlength[1]*Math.cos(angles[0]+angles[1]))+(armlength[2]*Math.cos(angles[0]+angles[1]+angles[2]))+(armlength[0]*Math.cos(angles[0]+angles[2]+angles[3]+angles[1])))
+		J[1][1]=((armlength[1]*Math.cos(angles[0]+angles[1]))+(armlength[2]*Math.cos(angles[0]+angles[1]+angles[2]))+(armlength[0]*Math.cos(angles[0]+angles[2]+angles[3]+angles[1])))
+		J[1][2]=((armlength[2]*Math.cos(angles[0]+angles[1]+angles[2]))+(armlength[0]*Math.cos(angles[0]+angles[2]+angles[3]+angles[1])))
+		J[1][3]=((armlength[0]*Math.cos(angles[0]+angles[2]+angles[3]+angles[1])))
+	//console.log(J)
+	return J;
+}
+
+function Endeff(angles){
+	var EE=[0,0];
+		EE[0]=+((armlength[0]*Math.cos(angles[0]))+(armlength[1]*Math.cos(angles[0]+angles[1]))+(armlength[2]*Math.cos(angles[0]+angles[1]+angles[2]))+(armlength[3]*Math.cos(angles[0]+angles[2]+angles[3]+angles[1])))
+		EE[1]=+0.8+((armlength[0]*Math.sin(angles[0]))+(armlength[1]*Math.sin(angles[0]+angles[1]))+(armlength[2]*Math.sin(angles[0]+angles[1]+angles[2]))+(armlength[0]*Math.sin(angles[0]+angles[2]+angles[3]+angles[1])))
+		//console.log(EE)
+	return EE;
+}
+
+function pinv(A) {
+    return numeric.dot(numeric.inv(numeric.dot(numeric.transpose(A),A)),numeric.transpose(A));
+	
+}
+loader.load( "Models/RoboticArm/1.json", addRobotToScene);
+loader.load( "Models/RoboticArm/2.json", addRobotToScene);
+loader.load( "Models/RoboticArm/3.json", addRobotToScene);
+loader.load( "Models/RoboticArm/4.json", addRobotToScene);
+ 
+function addRobotToScene( geometry, materials ) {
+	var material = new THREE.MeshFaceMaterial(materials);
+	model = new THREE.Mesh( geometry, material );
+	model.scale.set(1,1,1);
+	model.position.y=1.45;
+	names=["RA1","RA2","RA3","RA4"]
+	var pos=getArmPos(robcouter,[0,0.8,0]);
+	model.position.x=pos[0];
+	model.position.z=pos[1];
+	model.rotation.y=pos[2];
+	model.name=names[robcouter];
+	console.log(pos)
+	robcouter++;
+	scene.add( model );
+}
+ 
+function getArmPos(number,init){
+	//console.log("get " + number)
+	var Position=init;
+	//console.log("robot 0 pos= " + Position[0])
+	//console.log("robot 0 rpos= " + robotpos[0])
+	for(var i=0;i<number;i++){
+		
+		Position[0]+=armlength[i]*Math.cos(Position[2])
+		Position[1]-=armlength[i]*Math.sin(Position[2])
+		Position[2]+=armangles[i+1]
+		//console.log(Position[0])
+		}
+	return Position;
+	}
+
+
+ 
+	// initialize object to perform world/screen calculations
+
+	
+ projector = new THREE.Projector();
+document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+ 
+ var FlagPos
+  // After loading JSON from our file, we add it to the scene
+ function addTABLEToScene( geometry, materials ) {
+   var material = new THREE.MeshFaceMaterial(materials);
+   model = new THREE.Mesh( geometry, material );
+   model.scale.set(1,1,1);
+   scene.add( model );
+ }
+ var helpset;
+
+ //block added or changed
+ function makeHandler(meshName,visibility) {
+    return function addTABLEToScene( geometry, materials ) {
+        var material = new THREE.MeshFaceMaterial(materials);
+        model = new THREE.Mesh( geometry, material );
+        model.scale.set(1,1,1);
+        model.visible = visibility;
+        scene.add( model );
+        meshes[meshName] = model;
+    };
+}
+//end modification 
+var TAPAPOSI=[0,0]
+  function addFlagToScene( geometry, materials ) {
+  
+	  // Just set skinning to the material that has the bones.
+	   materials[0].skinning=true;
+	   model = new THREE.SkinnedMesh( geometry,new THREE.MeshFaceMaterial(materials) );
+	   model.scale.set(1,1,1);
+	   model.name=("F"+FlagPos);
+	   WhatTapa=FlagPos.split("");
+	   TAPAPOSI[0]=(-0.59421+(0.1448475*(parseInt(WhatTapa[1])-1)))
+	   TAPAPOSI[1]=(-0.53769+(0.1448475*(parseInt(WhatTapa[0])-1)))
+	   counter2=0;
+	   model.position.x=-0.59421+(0.1448475*(parseInt(WhatTapa[1])-1))
+	   model.position.z=-0.53769+(0.1448475*(parseInt(WhatTapa[0])-1))
+	   model.position.y=1.45
+	   scene.add( model );
+	 }
+
+  function addTAPASToScene( geometry, materials ) {
+	var material = new THREE.MeshFaceMaterial(materials);
+	model = new THREE.Mesh( geometry, material );
+	model.scale.set(1,1,1);
+	TAPAcounter.r +=1
+	if (TAPAcounter.r ==10){		
+		TAPAcounter.r=1;
+		TAPAcounter.c +=1;
+		}
+	TAPA="TAPA".concat(TAPAcounter.c);
+	TAPA=TAPA.concat(TAPAcounter.r);
+	model.name=TAPA;
+	scene.add( model );
+ }
+ 
+ var Atapax = new Array;
+ var Atapay = new Array;
+ 
+ //					ANIMATED TAPAS				//
+ 
+ function addATAPAToScene(geometry,materials){
+	var material = new THREE.MeshFaceMaterial(materials);
+	model = new THREE.Mesh( geometry, material );
+	model.scale.set(1,1,1);
+	
+	//console.log("creating a ATAPA..")
+	model.position.x=-0.59421+(0.1448475*(parseInt(Atapay[0])-1))
+	model.position.z=-0.53769+(0.1448475*(parseInt(Atapax[0])-1))
+	model.position.y=1.4
+	//console.log("ATAPAS to create.." +Atapax+Atapay)
+	Atapax.shift();
+	Atapay.shift();
+	//console.log("ATAPAS left.." +Atapax+Atapay)
+	model.name="ActTAPA";
+	ActTAPAvector.push(model);
+	scene.add( model );
+ }
+ 
+ 
+ 
+ function findobjectbynumber(NAME){
+	
+	NAME="TAPA".concat(NAME)
+	pp=0;
+	for (pp=0;pp<scene.children.length;pp++){
+		if(scene.children[pp].name==NAME){
+			obj=scene.children[pp];
+			pp=scene.children.length;
+			}
+		}
+ return obj
+ }
+  function findflagbynumber(NAME){
+	
+	NAME="F".concat(NAME)
+	pp=0;
+	for (pp=0;pp<scene.children.length;pp++){
+		if(scene.children[pp].name==NAME){
+			obj=scene.children[pp];
+			pp=scene.children.length;
+			}
+		}
+ return obj
+ }
+ 
+   function findbyname(NAME){
+	
+	pp=0;
+	for (pp=0;pp<scene.children.length;pp++){
+		if(scene.children[pp].name==NAME){
+			obj=scene.children[pp];
+			pp=scene.children.length;
+			}
+		}
+ return obj
+ }
+
+ function openbox(c){
+	
+	centerboxxy=c.split("");
+	//console.log(centerboxxy[0]);
+	//console.log(centerboxxy[1]);
+	boxtoopen=findobjectbynumber(parseInt(c));
+	if (pm[(centerboxxy[0]-1)][centerboxxy[1]-1]==0){
+		boxtoopen.position.x =21.1;
+		//new Atapa={x:(parseInt(centerboxxy[0])),y:(parseInt(centerboxxy[1]))}
+		Atapax.push(parseInt(centerboxxy[0]))
+		Atapay.push(parseInt(centerboxxy[1]))
+		console.log(Atapax)
+		console.log(Atapay)
+		loader.load( "Models/atapa.json", addATAPAToScene);
+		pm[(centerboxxy[0]-1)][centerboxxy[1]-1]=1;
+		
+		
+		if (gm[(centerboxxy[0]-1)][centerboxxy[1]-1]==0){
+			
+			var operator=["(parseInt(c)+1)","(parseInt(c)+10)","(parseInt(c)-10)","(parseInt(c)-1)","(parseInt(c)+11)","(parseInt(c)+9)","(parseInt(c)-11)","(parseInt(c)-9)"]
+			//console.log("empty!");
+			for(var dd=0;dd<8;dd++){
+				Open=eval(operator[dd])
+				Open= Open.toString();
+				Openxy=Open.split("");
+				if(pm[(Openxy[0]-1)][Openxy[1]-1]==0){
+					openbox(Open);
+					}
+				}	
+			}	
+		}
+	}	
+	
+
+ function remove(array, element) {
+    const index = array.indexOf(element);
+    array.splice(index, 1);
+}
+
+
+/*						SET FLAG					*/
+ function SetFlag(r){
+	centerboxxy=r.split("");
+	if (pm[(centerboxxy[0]-1)][centerboxxy[1]-1]==8){//if it is already a flag, take it out
+		pm[(centerboxxy[0]-1)][centerboxxy[1]-1]=0;
+		var Ob=findflagbynumber(r)
+		Ob.position.x=21.1;
+		//remove(scene.children,Ob);
+		}
+	else if (pm[(centerboxxy[0]-1)][centerboxxy[1]-1]==0){//not flag? put a flag
+		pm[(centerboxxy[0]-1)][centerboxxy[1]-1]=8;
+		counter2=0;
+		FlagPos=r;
+		loader.load( "Models/flag1.json", addFlagToScene);
+		//loader.load( "Human.json", addFlagToScene);
+		
+		}
+
+ }
+
+//block added or changed 
+document.getElementById("ButtonAL").onclick = function(){
+ 	if(ambient_switch==true){
+        scene.remove(ambientLight);
+    	ambient_switch = false;}
+    else{
+        scene.add(ambientLight);
+    	ambient_switch = true;}
+ 	material.needsUpdate = true;
+ };
+
+document.getElementById("ButtonPL").onclick = function(){
+ 	if(point_switch==true){
+        scene.remove( light1 );
+        scene.remove( light );
+    	point_switch = false;}
+    else{
+        scene.add( light1 );
+        scene.add( light );
+    	point_switch = true;}
+ 	material.needsUpdate = true;
+ };
+
+ document.getElementById("ButtonSL").onclick = function(){
+ 	if(spot_switch==true){
+        scene.remove( spot );
+    	spot_switch = false;}
+    else{
+        scene.add( spot );
+    	spot_switch = true;}
+ 	material.needsUpdate = true;
+ };
+
+document.getElementById("slider1").onchange = function(event) {
+    spot.angle = event.target.value;
+};
+
+document.getElementById("slider2").onchange = function(event) {
+    camera.fov = event.target.value;
+    camera.updateProjectionMatrix();
+};
+
+document.getElementById("ListTX").onchange = function(event) {
+    meshes["Wood"].visible = false;
+    meshes["tablaB"].visible = false;
+    meshes["tablaC"].visible = false;
+    meshes[event.target.value].visible = true;
+};
+//end modification
+ 
+function onDocumentMouseDown( event ){
+	mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+	mouse.y = - ( (event.clientY-30) / window.innerHeight ) * 2 + 1; //line added or changed
+	console.log(mouse)
+	// find intersections
+
+	// create a Ray with origin at the mouse position
+	//   and direction into the scene (camera direction)
+
+	var vector = new THREE.Vector3( mouse.x, mouse.y, 1 );
+	projector.unprojectVector( vector, camera );
+	var ray = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+
+	// create an array containing all objects in the scene with which the ray intersects
+	var intersects = ray.intersectObjects( scene.children, true  );
+
+//LEFT CLICK	
+	if ( intersects.length > 0 && intersects[0].object.name.startsWith("TAPA") && event.button==0)
+
+	{
+		var boxnumber=intersects[0].object.name;
+		boxnumber = boxnumber.substring(4,6);
+		console.log("Opening box... "+intersects);
+		openbox(boxnumber);
+		//console.log(boxnumber);
+	}
+
+//RIGHT CLICK	
+	if ( intersects.length > 0 && intersects[0].object.name.startsWith("TAPA") && event.button==2)
+
+	{
+		var boxnumber=intersects[0].object.name;
+		boxnumber = boxnumber.substring(4,6);
+		console.log("setting a flag... "+boxnumber);
+		SetFlag(boxnumber);
+		console.log(boxnumber);
+	}
+
+
+}
+
+
+
+function containsObject(obj, list) {
+    var i;
+    for (i = 0; i < list.length; i++) {
+        if (list[i] === obj) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+var currentstateang=[0,0,0,1.57]
+var PF=[0,0]
+var finalang=[1.57,1.57]
+var posx=[0,0,0]
+var posy=[0,0,0]
+var cposx=[0,0];
+var cposy=[0,0];
+var counter2=100;
+var steps=[0,0,0,0]
+var movedflag
+function animaterobot(){
+	PF=TAPAPOSI
+	if (flagon){
+		movedflag=findflagbynumber(FlagPos)
+		console.log(movedflag)}
+	posx[2]=PF[0]-(armlength[3]*Math.cos(finalang[0]))
+	posy[2]=PF[1]+(armlength[3]*Math.sin(finalang[0]))
+	posx[1]=(posx[2])-(armlength[2]*Math.cos(finalang[1]))
+	posy[1]=(posy[2])+(armlength[2]*Math.sin(finalang[1]))
+	cposx[1]=posx[1]
+	cposy[1]=(0.8-posy[1])
+	c2= ((cposx[1]*cposx[1])+(cposy[1]*cposy[1])-(armlength[0]*armlength[0])-(armlength[1]*armlength[1]))/(2*(armlength[1]*armlength[0]));
+	//console.log("c2 "+ c2)
+	s2= Math.sqrt(1-(c2*c2))
+	//console.log("s2 "+ c2)
+	q1= (Math.atan2(s2,c2))
+	//console.log("q1 "+ q1)
+	q0= (Math.atan2(cposy[1],cposx[1]))-(Math.atan2((armlength[1])*s2,(armlength[0]+(armlength[1]*c2))))
+	//console.log("q0 "+ q1)
+	// Move in 100 interactions
+	//currentstateang=[q0,q1,finalang[0],finalang[1]]
+	
+	if (counter2==0){
+		steps[0]=q0-currentstateang[0]
+		steps[1]=q1-currentstateang[1]
+		steps[2]=finalang[0]-currentstateang[2]
+		steps[3]=finalang[1]-currentstateang[3]
+		
+	}
+	
+	if (counter2==101){
+	steps[0]=0-currentstateang[0]
+	steps[1]=0-currentstateang[1]
+	steps[2]=0-currentstateang[2]
+	steps[3]=3.14159-currentstateang[3]
+	}
+	if (counter2<200){
+	currentstateang[0]+=steps[0]/100
+	currentstateang[1]+=steps[1]/100
+	currentstateang[2]+=steps[2]/100
+	currentstateang[3]+=steps[3]/100
+	}
+	link0=findbyname("RA1")
+	
+	link1=findbyname("RA2")
+	link2=findbyname("RA3")
+	link3=findbyname("RA4")
+	link0.rotation.y=currentstateang[0]
+	link1.rotation.y=currentstateang[1]+currentstateang[0]
+	link2.rotation.y=currentstateang[2]
+	link3.rotation.y=currentstateang[3]
+	// FORWARD K   //
+	link1.position.x=(link0.position.x+(armlength[0]*Math.cos(link0.rotation.y)));
+	link1.position.z=(link0.position.z-(armlength[0]*Math.sin(link0.rotation.y)));
+	link2.position.x=(link1.position.x+(armlength[1]*Math.cos(link1.rotation.y)));
+	link2.position.z=(link1.position.z-(armlength[1]*Math.sin(link1.rotation.y)));
+	link3.position.x=(link2.position.x+(armlength[2]*Math.cos(link2.rotation.y)));
+	link3.position.z=(link2.position.z-(armlength[2]*Math.sin(link2.rotation.y)));
+	if (flagon && counter2<100){
+	movedflag.position.x=(link3.position.x+(armlength[3]*Math.cos(link3.rotation.y)));
+	movedflag.position.z=(link3.position.z-(armlength[3]*Math.sin(link3.rotation.y)));
+	}
+	counter2++;
+	/*
+	link3.position.x=posx[2];
+	link3.position.z=posy[2];
+	link2.position.x=posx[1];
+	link2.position.z=posy[1];
+	*/
+	
+	//console.log(posx[1])
+	//console.log(posy[1])
+	//console.log(link0.position.x)
+	//console.log(link0.position.z)
+	
+	
+	
+}
+
+
+
+
+function animate(model,counter){
+	if ((containsObject(model,Flagvector))==false && model.name.startsWith("F")){
+		Flagvector.push(model)
+		Flagcounter.push(counter)
+		console.log(Flagvector)
+		}
+	if ((containsObject(model,ActTAPAvector))==false && model.name.startsWith("ActTAPA")){
+		ActTAPAvector.push(model)
+		ActTAPAcounter.push(0)
+		console.log(ActTAPAvector)
+		}
+	
+	//console.log(counter)
+	for (var i=0;i<Flagvector.length;i++){
+		Flagvector[i].bones[1].rotation.y =0.3*Math.sin(0.1*(counter+Flagcounter[i]));
+		Flagvector[i].bones[2].rotation.y =0.3*(Math.sin(0.07*(counter+Flagcounter[i])));
+		Flagvector[i].bones[3].rotation.y =-0.3*(Math.sin(0.1*(counter+Flagcounter[i])));
+		Flagvector[i].bones[4].rotation.y =-0.3*(Math.sin(0.07*(counter+Flagcounter[i])));
+		//console.log(Flagvector[i])
+		}
+	for (var ii=0;ii<ActTAPAvector.length;ii++){
+		if (ActTAPAvector[ii].position.y<3){
+			ActTAPAvector[ii].rotation.z +=0.1;
+			ActTAPAvector[ii].position.y +=0.01;
+			//console.log(Flagvector[ii])
+			}
+		}
+}
+var flagon=false;
+ var render = function () {
+   requestAnimationFrame(render);
+
+   //block added or changed
+   if (spot_leg==1){
+	   spotx+=0.1;
+	   spoty+=0.1;
+	   spot.position.set( spotx, 10, spoty );
+	   if (spoty>=0.0){
+	   		spot_leg=2;
+	   }
+	} else if (spot_leg==2){
+	   spotx-=0.1;
+	   spoty+=0.1;
+	   spot.position.set( spotx, 10, spoty );
+	   if (spotx<=0.0){
+	   		spot_leg=3;
+	   }
+	} else if (spot_leg==3){
+	   spotx-=0.1;
+	   spoty-=0.1;
+	   spot.position.set( spotx, 10, spoty );
+	   if (spoty<=0.0){
+	   		spot_leg=4;
+	   }
+	} else if (spot_leg==4){
+	   spotx+=0.1;
+	   spoty-=0.1;
+	   spot.position.set( spotx, 10, spoty );
+	   if (spotx>=0.0){
+	   		spotx = 0.0;
+	   		spoty = -3.0;
+	   		spot_leg=1;
+	   }
+	}
+	//end modification
+   
+   counter++;
+   if( model.name.startsWith("F") || model.name.startsWith("ActTAPA")){
+		animate(model,counter);
+		flagon=true;
+    }
+	animaterobot();
+   renderer.render(scene, camera);
+ };
+
+ render();
+ </script>
+</body>
+</html>
